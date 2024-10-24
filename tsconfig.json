@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist", // Diretório onde os arquivos compilados serão gerados
+    "rootDir": "./src", // Diretório onde estão os arquivos TypeScript
+    "target": "ES6", // Alvo da compilação
+    "module": "commonjs", // Usado para compatibilidade com Node.js
+    "strict": true, // Habilitar verificações mais rígidas
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*"] // Inclua todos os arquivos na pasta src
+}
