@@ -1,6 +1,8 @@
 import WebSocket from "ws";
 import readline from "readline";
 import { Client } from "./modules/Client";
+import { Message } from "./modules/Message";
+import { colors } from "./utils/colors";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,15 +14,21 @@ const ws = new WebSocket("ws://localhost:1107");
 const client = new Client();
 
 ws.on("open", () => {
-  console.log("Conectado ao servidor de chat!");
-  rl.question("Por favor, digite seu nickname: ", (nickname: string) => {
-    client.nickname = nickname;
-    ws.send(`${client.nickname} entrou no chat!!`);
-    rl.on("line", (message: string) => {
-      const data = new Date().toLocaleString().split(", ")[1];
-      ws.send(`[${data}] - ${client.nickname}: ${message}`);
-    });
-  });
+  console.log(`${colors.green}Conectado ao servidor de chat!${colors.reset}`);
+  rl.question(
+    `${colors.green}Por favor, digite seu nickname: ${colors.reset}`,
+    (nickname: string) => {
+      client.nickname = nickname;
+      client.color = getUserColor(nickname);
+      ws.send(`${client.nickname} entrou no chat!!`);
+      rl.prompt();
+      rl.on("line", (text: string) => {
+        if (text.trim()) {
+          pushMessage(text);
+        }
+      });
+    }
+  );
 });
 
 ws.on("message", (message: WebSocket.Data) => {
@@ -28,6 +36,35 @@ ws.on("message", (message: WebSocket.Data) => {
 });
 
 ws.on("close", () => {
-  console.log("Desconectado do servidor");
+  console.log(`${colors.red}Desconectado do servidor${colors.reset}`);
   process.exit(0);
 });
+
+function pushMessage(text: string) {
+  const message = new Message(client.nickname, text);
+  client.history.push(message);
+  clearPreviousLine();
+  ws.send(
+    `[${message.data.toLocaleString().split(", ")[1]}] - ${client.color}${client.nickname}: ${message.text}${colors.reset}`
+  );
+}
+
+function getUserColor(nickname: string): string {
+  const colorList = [
+    colors.cyan,
+    colors.green,
+    colors.yellow,
+    colors.magenta,
+    colors.blue,
+  ];
+  const index = nickname
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colorList[index % colorList.length];
+}
+
+function clearPreviousLine() {
+  process.stdout.moveCursor(0, -1);
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+}
